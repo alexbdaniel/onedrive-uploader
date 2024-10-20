@@ -1,9 +1,17 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
-	<s:String x:Key="/Default/Environment/UnitTesting/CreateUnitTestDialog/TestProjectMapping/=A921B787_002D4952_002D4C22_002DACB4_002DB92A0D393223/@EntryIndexedValue">Application.Tests</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/CreateUnitTestDialog/TestProjectMapping/=A921B787_002D4952_002D4C22_002DACB4_002DB92A0D393223/@EntryIndexedValue">1748097A-409F-4D30-AE9D-BBD97E060B6A</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/CreateUnitTestDialog/TestTemplateMapping/=xUnit/@EntryIndexedValue">33ff99d8-b1ad-4ed5-a4fd-376b97c2c841</s:String>
 	<s:Boolean x:Key="/Default/Environment/UnitTesting/CreateUnitTestDialog/ShowAdvancedOptions/@EntryValue">True</s:Boolean>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=ff22eff1_002D5294_002D4dbe_002D9b60_002D201dd24233db/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="GraphApiWorks" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=67a42fb1_002D5148_002D44e9_002Dacaa_002D5e00721bf1b3/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="GetAuthCode" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;TestAncestor&gt;&#xD;
-    &lt;TestId&gt;xUnit::1748097A-409F-4D30-AE9D-BBD97E060B6A::net8.0::Application.Tests.Graph.GraphServiceTest.GraphApiWorks&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::1748097A-409F-4D30-AE9D-BBD97E060B6A::net8.0::Application.Tests.Graph.GraphServiceTest.GetAuthCode&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::1748097A-409F-4D30-AE9D-BBD97E060B6A::net8.0::Application.Tests.Graph.GraphServiceTest.GetRefreshTokenFromCode.GetRefreshTokenFromCode(authenticationCode: "M.C544_BAY.2.U.0bb2731f-422e-c3ed-6b8d-95ae9e6c269"···)&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::1748097A-409F-4D30-AE9D-BBD97E060B6A::net8.0::Application.Tests.Graph.GraphServiceTest.GetRefreshTokenFromCode&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::1748097A-409F-4D30-AE9D-BBD97E060B6A::net8.0::Application.Tests.Graph.GraphServiceTest.FileUploadWorks&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::1748097A-409F-4D30-AE9D-BBD97E060B6A::net8.0::Application.Tests.Graph.GraphServiceTest.GetAccessToken&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::1748097A-409F-4D30-AE9D-BBD97E060B6A::net8.0::Application.Tests.Graph.GraphServiceTest.Small_file_uploads&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::1748097A-409F-4D30-AE9D-BBD97E060B6A::net8.0::Application.Tests.Graph.GraphServiceTest.Small_file_uploads_replacing_existing&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
-&lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>
+&lt;/SessionState&gt;</s:String>
+	
+	</wpf:ResourceDictionary>

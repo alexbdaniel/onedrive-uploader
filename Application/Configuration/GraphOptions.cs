@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.Extensions.Primitives;
+using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace Application.Configuration;
 
@@ -21,6 +23,20 @@ public class GraphOptions
     [Required]
     public required string RedirectUri { get; init; }
     
+    [Required]
+    public required string AccessTokenUri { get; init; }
+    
+    [Required]
+    public required string AuthorizeUri { get; init; }
+    
     public Uri BaseUri => new Uri(BaseAddress);
+    
+    [Required]
+    public required GraphEndpoints Endpoints { get; init; }
 }
 
+public class GraphEndpoints
+{
+    [Required]
+    public required string FileUpload { get; init; }
+}

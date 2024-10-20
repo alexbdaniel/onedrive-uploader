@@ -13,6 +13,8 @@ public static class ServiceConfigurator
 
         services.ConfigureOptions(builder);
         services.ConfigureGraphHttpClient(builder);
+
+        services.AddMemoryCache();
         
         
         return services;
@@ -20,9 +22,14 @@ public static class ServiceConfigurator
     
     private static IServiceCollection ConfigureOptions(this IServiceCollection services, HostApplicationBuilder builder)
     {
+        services.AddOptions<ConfigurationOptions>().Bind(builder.Configuration.GetSection(ConfigurationOptions.Key))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+        
         services.AddOptions<GraphOptions>().Bind(builder.Configuration.GetSection(GraphOptions.Key))
             .ValidateDataAnnotations()
             .ValidateOnStart();
+        
         
         
         
