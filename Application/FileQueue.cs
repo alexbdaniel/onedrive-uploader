@@ -8,7 +8,13 @@ namespace Application;
 
 public class FileQueue
 {
-    public readonly Channel<string> Channel = System.Threading.Channels.Channel.CreateBounded<string>(10);
+
+    private static readonly BoundedChannelOptions boundedChannelOptions = new(500)
+    {
+        FullMode = BoundedChannelFullMode.Wait,
+    };
+
+    public readonly Channel<string> Channel = System.Threading.Channels.Channel.CreateBounded<string>(boundedChannelOptions);
     private readonly Uploader uploader;
     private readonly UploadOptions options;
 
@@ -26,45 +32,5 @@ public class FileQueue
     public async ValueTask<string> Consume(CancellationToken cancellationToken = default)
     {
         return await Channel.Reader.ReadAsync(cancellationToken);
-    }
-
-    public async ValueTask HandleAsync(CancellationToken cancellationToken = default)
-    {
-        ChannelReader<string> reader = Channel.Reader;
-        
-        
-        
-        
-        
-        while (await reader.WaitToReadAsync(cancellationToken))
-        {
-            while (reader.TryRead(out string? fullPath))
-            {
-                if (fullPath == null) continue;
-
-                FileInfo file = new FileInfo(fullPath);
-                
-                string directoryName = options.DestinationDirectoryName;
-                string fileName = file.Name;
-
-                var stream = GetStream(file);
-                
-                await uploader.UploadAsync(directoryName, fileName, stream);
-            }
-        }
-    }
-    
-    private static Stream GetStream(FileInfo file)
-    {
-        var streamOptions = new FileStreamOptions()
-        {
-            Access = FileAccess.Read,
-            Mode = FileMode.Open,
-            Share = FileShare.ReadWrite,
-            Options = FileOptions.Asynchronous,
-        };
-        
-        var stream = new FileStream(file.FullName, streamOptions);
-        return stream;
     }
 }

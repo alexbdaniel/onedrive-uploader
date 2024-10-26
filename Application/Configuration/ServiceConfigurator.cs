@@ -20,7 +20,7 @@ public static class ServiceConfigurator
         services.AddSingleton<FileQueue>();
         
         services.AddSingleton<GraphService>();
-        services.AddSingleton<UserHandler>();
+        services.AddScoped<UserHandler>();
         services.AddSingleton<Authenticator>();
         services.AddSingleton<Uploader>();
         

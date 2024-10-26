@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Channels;
 using Application.Configuration;
 using Microsoft.Extensions.Hosting;
@@ -20,22 +21,24 @@ public class QueueBackgroundService : BackgroundService
     }
 
 
+    [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract")]
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        
         while (!stoppingToken.IsCancellationRequested)
         {
-            
             ChannelReader<string> reader = queue.Channel.Reader;
     
             while (await reader.WaitToReadAsync(stoppingToken))
             {
                 while (reader.TryRead(out string? fullPath))
                 {
-                    if (fullPath == null) continue;
+                    if (fullPath == null) 
+                        continue;
 
                     FileInfo file = new FileInfo(fullPath);
-            
+                    if (!file.Exists)
+                        continue;
+                    
                     string directoryName = options.DestinationDirectoryName;
                     string fileName = file.Name;
 
@@ -46,7 +49,6 @@ public class QueueBackgroundService : BackgroundService
                     await uploader.UploadAsync(directoryName, fileName, stream);
                 }
             }
-            
         }
         
         
