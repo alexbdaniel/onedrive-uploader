@@ -30,7 +30,7 @@ public class Uploader
 
     public async Task UploadAsync(string folderPath, string fileName, Stream stream)
     {
-        var authenticator = new Authenticator2(graphService, options, cache, logger);
+        var authenticator = new Authenticator(graphService, options, cache, logger);
 
         string? accessToken = await authenticator.GetStoredTokenAsync(TokenType.Access);
         if (accessToken == null)

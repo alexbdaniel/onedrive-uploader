@@ -50,8 +50,7 @@ public class GraphServiceTest
         var response = await graphService.GetAccessTokenAsync(refreshToken);
 
         string accessToken = response.Item2.AccessToken;
-        await Authenticator.SaveTokenAsync(options.AccessTokenFullPath, TokenType.Access, accessToken);
-
+        
     }
 
     [Fact]
@@ -60,12 +59,10 @@ public class GraphServiceTest
         //configuration
         await using var provider = new TestServiceProvider().GetTestServiceProvider();
         var graphService = provider.GetRequiredService<GraphService>();
-        var options = provider.GetRequiredService<IOptions<ConfigurationOptions>>().Value;
-        
-        string accessToken = await Authenticator.GetStoredTokenAsync(options.AccessTokenFullPath, TokenType.Access);
-        if (accessToken == null)
-            throw new NullReferenceException(nameof(accessToken));
+        var authenticator = provider.GetRequiredService<Authenticator>();
 
+        string accessToken = await authenticator.UpdateAccessTokenAsync();
+        
         string temporaryFileFullPath = $@"C:\Users\{Environment.UserName}\projects\TestFiles\OneDriveUploader\testcontent.txt";
         FileInfo temporaryFile = TestUtilities.CreateTemporaryFileWithContent(temporaryFileFullPath);
         using var reader = new StreamReader(temporaryFile.FullName);
@@ -100,9 +97,10 @@ public class GraphServiceTest
         //configuration
         await using var provider = new TestServiceProvider().GetTestServiceProvider();
         var graphService = provider.GetRequiredService<GraphService>();
-        var options = provider.GetRequiredService<IOptions<ConfigurationOptions>>().Value;
+        var authenticator = provider.GetRequiredService<Authenticator>();
+
+        string accessToken = await authenticator.UpdateAccessTokenAsync();
         
-        string accessToken = await Authenticator.GetStoredTokenAsync(options.AccessTokenFullPath, TokenType.Access);
         if (accessToken == null)
             throw new NullReferenceException(nameof(accessToken));
         
@@ -177,7 +175,8 @@ public class GraphServiceTest
 
         string cloudPath = $"/TestFiles/{temporaryFile.Name}";
 
-        string accessToken = await Authenticator.GetStoredTokenAsync(options.AccessTokenFullPath, TokenType.Access);
+        var authenticator = provider.GetRequiredService<Authenticator>();
+        string accessToken = await authenticator.UpdateAccessTokenAsync();
         if (accessToken == null) throw new NullReferenceException(nameof(accessToken));
         var response = await graphService.UploadLargeFileAsync(accessToken, cloudPath, reader.BaseStream, ConflictBehavior.Rename);
         

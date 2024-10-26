@@ -50,10 +50,5 @@
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
     </ItemGroup>
-    
-    
-    <ItemGroup>
-      <Folder Include="UserInteractions\" />
-    </ItemGroup>
 
 </Project>

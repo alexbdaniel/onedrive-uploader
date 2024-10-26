@@ -12,7 +12,6 @@ internal static class Program
         AppDomain.CurrentDomain.UnhandledException += (HandleUnhandledException);
         
         HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
-        string environmentName = builder.Environment.EnvironmentName.ToLower();
         
         builder.Configuration
             .SetBasePath(Directory.GetCurrentDirectory())
@@ -30,9 +29,6 @@ internal static class Program
         IHost application = builder.Build();
 
         await application.RunAsync().ConfigureAwait(false);
-        
-        
-        Console.WriteLine("Hello, World!");
     }
     
     private static void HandleUnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -40,11 +36,13 @@ internal static class Program
         try
         {
             Exception ex = (Exception)e.ExceptionObject;
-            Console.WriteLine("An unhandled exception occured. ", ex);
+            Console.WriteLine($"An unhandled exception occured. {ex}");
         }
         catch (Exception ex)
         {
             Console.WriteLine(ex);
         }
     }
+    
+    
 }

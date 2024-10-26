@@ -1,11 +1,12 @@
+using System.Collections.Immutable;
 using System.Net;
 using System.Security.Authentication;
 using System.Text;
 using Application.Configuration;
-using Application.Graph.Models;
+using Application.UserInteractions;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 
 namespace Application.Graph;
 
@@ -14,103 +15,111 @@ public class Authenticator
     private readonly ConfigurationOptions options;
     private readonly GraphService graphService;
     private readonly IMemoryCache cache;
+    private readonly ILogger logger;
 
-    public Authenticator(GraphService graphService, ConfigurationOptions options, IMemoryCache cache)
+    internal bool AccessTokenValid { get; set; }
+    internal bool RefreshTokenValid { get; set; }
+
+    public Authenticator(GraphService graphService, ConfigurationOptions options, IMemoryCache cache, ILogger logger)
     {
         this.graphService = graphService;
         this.cache = cache;
+        this.logger = logger;
         this.options = options;
-    }
-    
-    public Authenticator(GraphService graphService, IOptions<ConfigurationOptions> configOptions, IMemoryCache cache)
-    {
-        this.graphService = graphService;
-        this.cache = cache;
-        this.options = configOptions.Value;
-    }
-
-    public async Task<bool> CheckRefreshTokenExists()
-    {
-        string? token = await GetStoredTokenAsync(options.RefreshTokenFullPath, TokenType.Refresh, cache);
-        return string.IsNullOrWhiteSpace(token);
     }
     
     public async Task AuthenticateAsync()
     {
-        string? accessToken = await GetStoredTokenAsync(options.AccessTokenFullPath, TokenType.Access, cache);
-        string? refreshToken = await GetStoredTokenAsync(options.RefreshTokenFullPath, TokenType.Refresh, cache);
-        if (string.IsNullOrWhiteSpace(refreshToken))
-        {
-            string code = UserHandler.GetAuthorizationCodeFromUser(graphService.GetAuthenticationCodeUri());
-            await GetRefreshTokenAsync(code); //gets refresh + access tokens and saves to cache
-            return;
-        }
-        
-        var (statusCode, accessTokenResponse) = await graphService.GetAccessTokenAsync(refreshToken);
-        //handle if refresh token is expired too
-        if (!statusCode.IsSuccessful() || accessTokenResponse == null)
-        {
-            string code = UserHandler.GetAuthorizationCodeFromUser(graphService.GetAuthenticationCodeUri());
-            await GetRefreshTokenAsync(code); //gets refresh + access tokens and saves to cache
-            return;
-        }
-        
-        await SaveTokenAsync(options.AccessTokenFullPath, TokenType.Access, accessTokenResponse.AccessToken, cache);
+        await UpdateRefreshAndAccessTokenAsync();
     }
-
-
-
-    /// <summary>
-    /// Gets refresh and access tokens and saves them to the cache.
-    /// </summary>
-    public async Task UpdateRefreshTokenAsync()
+    
+    public async Task UpdateRefreshAndAccessTokenAsync()
     {
         string code = UserHandler.GetAuthorizationCodeFromUser(graphService.GetAuthenticationCodeUri());
-        await GetRefreshTokenAsync(code); 
-    }
-    
-    
-
-    /// <summary>
-    /// Gets refresh token and adds it to cache.
-    /// </summary>
-    /// <param name="code">Authorization code from user. Authorizes application.</param>
-    public async Task GetRefreshTokenAsync(string code)
-    {
-        (HttpStatusCode, RefreshTokenResponse?) result = await graphService.GetRefreshTokenAsync(code);
-        if (result.Item1 != HttpStatusCode.OK || result.Item2 == null)
+        
+        var (statusCode, response) = await graphService.GetRefreshTokenAsync(code);
+        if (statusCode != HttpStatusCode.OK || response == null)
             throw new AuthenticationException("Could not get refresh token from code");
 
-        await SaveTokenAsync(options.RefreshTokenFullPath, TokenType.Refresh, result.Item2.RefreshToken, cache);
-        await SaveTokenAsync(options.AccessTokenFullPath, TokenType.Access, result.Item2.AccessToken, cache);
+        await SaveTokenAsync(TokenType.Refresh, response.RefreshToken);
+        await SaveTokenAsync(TokenType.Access, response.AccessToken);
+        
+        AccessTokenValid = true;
+        RefreshTokenValid = true;
     }
-    
-    
-    public async Task<AuthenticationResult> UpdateCachedAccessTokenAsync(bool force = false)
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns>Access token</returns>
+    public async Task<string> UpdateAccessTokenAsync()
     {
-        cache.TryGetValue("access-token", out string? accessToken);
-        
-        string? refreshToken = await GetStoredTokenAsync(options.RefreshTokenFullPath, TokenType.Refresh, cache);
+        string? refreshToken = await GetStoredTokenAsync(TokenType.Refresh);
         if (refreshToken == null)
-            return AuthenticationResult.NewRefreshTokenRequired;
-        
-        var refreshTokenResponse = await graphService.GetAccessTokenAsync(refreshToken);
+        {
+            await UpdateRefreshAndAccessTokenAsync();
+            return GetRequiredStoredToken(TokenType.Access, cache);
+        }
 
-        if (refreshTokenResponse.Item1 != HttpStatusCode.OK)
-            throw new AuthenticationException();
-        
-        
-        cache.Set("access-token", refreshTokenResponse!.Item2!.AccessToken);
-        cache.Set("refresh-token", refreshTokenResponse!.Item2!.RefreshToken);
+        var (statusCode, response) = await graphService.GetAccessTokenAsync(refreshToken);
+        //could be that the refresh token expired
+        if (statusCode.IsSuccessful() == false || response?.AccessToken == null)
+        {
+            await UpdateRefreshAndAccessTokenAsync();
+            return GetRequiredStoredToken(TokenType.Access, cache);
+        }
 
-        return AuthenticationResult.Success;
+        await SaveTokenAsync(TokenType.Access, response!.AccessToken);
+        
+        AccessTokenValid = true;
+        RefreshTokenValid = true;
+        
+        return GetRequiredStoredToken(TokenType.Access, cache);
     }
     
-    #region Refresh token file
+    #region Utilities
 
 
     private async Task SaveTokenAsync(TokenType tokenType, string content)
     {
+        string tokenName = tokenType == TokenType.Access ? "access-token" : "refresh-token";
+        
+        cache.Set(tokenName, content);
+        
+        string fullPath = tokenType switch
+        {
+            TokenType.Refresh => options.RefreshTokenFullPath,
+            TokenType.Access => options.AccessTokenFullPath,
+            _ => throw new ArgumentOutOfRangeException(nameof(tokenType), tokenType, null)
+        };
+
+        try
+        {
+            var streamOptions = new FileStreamOptions
+            {
+                Options = FileOptions.Encrypted,
+                Access = FileAccess.ReadWrite,
+                Mode = FileMode.OpenOrCreate,
+                Share = FileShare.Read
+            };
+
+            await using var writer = new StreamWriter(fullPath, Encoding.UTF8, streamOptions);
+            await writer.WriteAsync(content);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unhandled exception writing token to file.");
+        }
+    }
+    
+    internal async Task<string?> GetStoredTokenAsync(TokenType tokenType)
+    {
+        string? token = null;
+        
+        token = GetStoredToken(tokenType, cache);
+        if (token != null)
+            return token;
+        
         string fullPath = tokenType switch
         {
             TokenType.Refresh => options.RefreshTokenFullPath,
@@ -118,95 +127,56 @@ public class Authenticator
             _ => throw new ArgumentOutOfRangeException(nameof(tokenType), tokenType, null)
         };
         
-        await SaveTokenAsync(fullPath, tokenType, content, cache);
+        token = await GetStoredTokenAsync(fullPath);
+        
+        return token;
     }
     
-    public static async Task SaveTokenAsync(string fileFullPath, TokenType tokenType, string content, IMemoryCache? cache = null)
+    private static async Task<string?> GetStoredTokenAsync(string fileFullPath)
     {
-        var streamOptions = new FileStreamOptions
-        {
-            Options = FileOptions.Encrypted,
-            Access = FileAccess.ReadWrite,
-            Mode = FileMode.OpenOrCreate,
-            Share = FileShare.None
-        };
+        if (!File.Exists(fileFullPath)) 
+            return null;
 
-        await using var writer = new StreamWriter(fileFullPath, Encoding.UTF8, streamOptions);
-        await writer.WriteAsync(content);
-        
-        string tokenName = tokenType == TokenType.Access ? "access-token" : "refresh-token";
-        
-        cache?.Set(tokenName, content);
-    }
-    
-    /// <summary>
-    /// First attempts to get new access token, then attempts to get new refresh token.
-    /// </summary>
-    public async Task UpdateTokensAsync()
-    {
-        string refreshToken = await GetTokenAsync(TokenType.Refresh);
-        var (statusCode, response) = await graphService.GetAccessTokenAsync(refreshToken);
-        if (statusCode != HttpStatusCode.OK || response?.AccessToken == null)
+        try
         {
-            await UpdateRefreshTokenAsync();
-            return;
+            var streamOptions = new FileStreamOptions
+            {
+                Options = FileOptions.Encrypted | FileOptions.Asynchronous | FileOptions.SequentialScan,
+                Access = FileAccess.Read,
+                Mode = FileMode.Open,
+                Share = FileShare.Read
+            };
+        
+            using var reader = new StreamReader(fileFullPath, Encoding.UTF8, true, streamOptions);
+            
+            string content = await reader.ReadToEndAsync();
+        
+            return content;
         }
-
-        await SaveTokenAsync(TokenType.Access, response.AccessToken);
-    }
-    
-    public async Task<string> GetTokenAsync(TokenType tokenType)
-    {
-        if (tokenType == TokenType.Access)
+        catch
         {
-            string? accessToken = await GetStoredTokenAsync(options.AccessTokenFullPath, TokenType.Access, cache);
-            if (accessToken != null) return accessToken;
-            await AuthenticateAsync();
-            accessToken = await GetStoredTokenAsync(options.AccessTokenFullPath, TokenType.Access, cache);
-            if (accessToken == null) throw new AuthenticationException($"{nameof(accessToken)} is null. Could not get it.");
-            return accessToken;
+            return null;
         }
-        
-        string? refreshToken = await GetStoredTokenAsync(options.RefreshTokenFullPath, TokenType.Refresh, cache);
-        if (refreshToken != null) return refreshToken;
-        await AuthenticateAsync();
-        refreshToken = await GetStoredTokenAsync(options.RefreshTokenFullPath, TokenType.Refresh, cache);
-        if (refreshToken == null) throw new AuthenticationException($"{nameof(refreshToken)} is null. Could not get it.");
-        return refreshToken;
     }
     
-
-    public static async Task<string?> GetStoredTokenAsync(string fileFullPath, TokenType tokenType, IMemoryCache? cache = null)
+    private static string GetRequiredStoredToken(TokenType tokenType, IMemoryCache cache)
     {
         string tokenName = tokenType == TokenType.Access ? "access-token" : "refresh-token";
-        if (cache != null)
-        {
-            cache.TryGetValue(tokenName, out string? token);
-            if (token != null)
-                return token;
-        }
-        
-        if (!File.Exists(fileFullPath)) return null;
-        
-        var streamOptions = new FileStreamOptions
-        {
-            Options = FileOptions.Encrypted | FileOptions.Asynchronous | FileOptions.SequentialScan,
-            Access = FileAccess.Read,
-            Mode = FileMode.Open,
-            Share = FileShare.None
-        };
-        
-        using var reader = new StreamReader(fileFullPath, Encoding.UTF8, true, streamOptions);
-        
-        string content = await reader.ReadToEndAsync();
 
-        cache?.Set(tokenName, content);
-
-        return content;
+        cache.TryGetValue(tokenName, out string? token);
+        if (token == null)
+            throw new KeyNotFoundException($"Could not find find {nameof(tokenType)}");
+        
+        return token;
     }
     
-    
-   
+    private static string? GetStoredToken(TokenType tokenType, IMemoryCache cache)
+    {
+        string tokenName = tokenType == TokenType.Access ? "access-token" : "refresh-token";
+        
+        cache.TryGetValue(tokenName, out string? token);
+        return token ?? null;
+    }
 
     #endregion
 }

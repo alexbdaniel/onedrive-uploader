@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Text.Json;
 
 namespace Application;
 
+[SuppressMessage("ReSharper", "MergeIntoLogicalPattern")]
 public static class Utilities
 {
     public static Uri Append(this Uri uri, params string[] paths)

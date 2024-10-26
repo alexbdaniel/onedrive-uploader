@@ -3,7 +3,7 @@ using Application.Graph;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
-namespace Application;
+namespace Application.UserInteractions;
 
 public class UserHandler
 {
@@ -18,19 +18,6 @@ public class UserHandler
         this.options = options.Value;
     }
     
-    public async Task HandleAsync()
-    {
-        var authenticator = new Authenticator(graphService, options, cache);
-
-        bool refreshTokenExists = await authenticator.CheckRefreshTokenExists();
-        
-        
-        
-        
-        await authenticator.UpdateCachedAccessTokenAsync();
-        
-    }
-
     public static string GetAuthorizationCodeFromUser(string requestUri)
     {
         string message1 =

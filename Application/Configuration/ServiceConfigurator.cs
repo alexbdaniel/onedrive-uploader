@@ -1,27 +1,34 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
 using Application.Graph;
+using Application.UserInteractions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
 namespace Application.Configuration;
 
+[SuppressMessage("ReSharper", "UnusedMethodReturnValue.Local")]
 public static class ServiceConfigurator
 {
     public static IServiceCollection ConfigureServices(this IServiceCollection services, HostApplicationBuilder builder)
     {
 
         services.ConfigureOptions(builder);
-        services.ConfigureGraphHttpClient(builder);
+        services.ConfigureGraphHttpClient();
+        
+        services.AddSingleton<FileQueue>();
         
         services.AddSingleton<GraphService>();
         services.AddSingleton<UserHandler>();
         services.AddSingleton<Authenticator>();
-        services.AddSingleton<Authenticator2>();
         services.AddSingleton<Uploader>();
-
-        services.AddMemoryCache();
         
+        services.AddMemoryCache();
+        services.AddSingleton<Watcher>();
+        services.AddHostedService<WatcherBackgroundService>();
+        services.AddHostedService<QueueBackgroundService>();
+
         
         return services;
     }
@@ -29,6 +36,10 @@ public static class ServiceConfigurator
     private static IServiceCollection ConfigureOptions(this IServiceCollection services, HostApplicationBuilder builder)
     {
         services.AddOptions<ConfigurationOptions>().Bind(builder.Configuration.GetSection(ConfigurationOptions.Key))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+        
+        services.AddOptions<UploadOptions>().Bind(builder.Configuration.GetSection(UploadOptions.Key))
             .ValidateDataAnnotations()
             .ValidateOnStart();
         
@@ -42,7 +53,7 @@ public static class ServiceConfigurator
         return services;
     }
     
-    private static IServiceCollection ConfigureGraphHttpClient(this IServiceCollection services, HostApplicationBuilder builder)
+    private static IServiceCollection ConfigureGraphHttpClient(this IServiceCollection services)
     {
         services.AddHttpClient<GraphService>((provider, client) =>
         {
