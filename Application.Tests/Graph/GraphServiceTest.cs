@@ -6,10 +6,9 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Application.Configuration;
 using Application.Graph;
+using Application.Graph.Models;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -63,7 +62,7 @@ public class GraphServiceTest
         var graphService = provider.GetRequiredService<GraphService>();
         var options = provider.GetRequiredService<IOptions<ConfigurationOptions>>().Value;
         
-        string accessToken = await Authenticator.GetTokenAsync(options.AccessTokenFullPath, TokenType.Access);
+        string accessToken = await Authenticator.GetStoredTokenAsync(options.AccessTokenFullPath, TokenType.Access);
         if (accessToken == null)
             throw new NullReferenceException(nameof(accessToken));
 
@@ -72,14 +71,27 @@ public class GraphServiceTest
         using var reader = new StreamReader(temporaryFile.FullName);
 
         string cloudPath = $"/TestFiles/{temporaryFile.Name}";
+        string folderName = "/TestFiles";
+        string fileName = temporaryFile.Name;
         
-        var response = await graphService.UploadSmallFileAsync(accessToken, cloudPath, reader.BaseStream);
+        var response = await graphService.UploadSmallFileAsync(accessToken, folderName, fileName, reader.BaseStream);
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        int expected = HttpStatusCode.OK.GetHashCode();
+        int actual = response.StatusCode.GetHashCode();
+
+
+
+        try
+        {
+            Assert.Equal(expected, actual);
+        }
+        finally
+        {
+            reader.Close();
+            //cleanup
+            temporaryFile.Delete();
+        }
         
-        reader.Close();
-        //cleanup
-        temporaryFile.Delete();
     }
 
     [Fact]
@@ -90,7 +102,7 @@ public class GraphServiceTest
         var graphService = provider.GetRequiredService<GraphService>();
         var options = provider.GetRequiredService<IOptions<ConfigurationOptions>>().Value;
         
-        string accessToken = await Authenticator.GetTokenAsync(options.AccessTokenFullPath, TokenType.Access);
+        string accessToken = await Authenticator.GetStoredTokenAsync(options.AccessTokenFullPath, TokenType.Access);
         if (accessToken == null)
             throw new NullReferenceException(nameof(accessToken));
         
@@ -98,8 +110,10 @@ public class GraphServiceTest
         using var reader = new StreamReader(temporaryFile.FullName);
 
         string cloudPath = $"/TestFiles/{temporaryFile.Name}";
+        string folderName = "/TestFiles";
+        string fileName = temporaryFile.Name;
         
-        var response = await graphService.UploadSmallFileAsync(accessToken, cloudPath, reader.BaseStream);
+        var response = await graphService.UploadSmallFileAsync(accessToken, folderName, fileName, reader.BaseStream);
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         
@@ -138,5 +152,57 @@ public class GraphServiceTest
         testConsole.WriteLine(txt);
         
         Assert.True(true, txt);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    public async Task Large_file_uploads(bool useExistingFile)
+    {
+        //configuration
+        await using var provider = new TestServiceProvider().GetTestServiceProvider();
+        var graphService = provider.GetRequiredService<GraphService>();
+        var options = provider.GetRequiredService<IOptions<ConfigurationOptions>>().Value;
+        
+        FileInfo temporaryFile;
+        if (useExistingFile)
+        {
+            temporaryFile = new FileInfo($@"C:\Users\{Environment.UserName}\projects\TestFiles\OneDriveUploader\Isles.jpg");
+        }
+        else
+        {
+            temporaryFile = TestUtilities.CreateTemporaryFileWithContent(300);
+        }
+
+        var reader = new StreamReader(temporaryFile.FullName);
+
+        string cloudPath = $"/TestFiles/{temporaryFile.Name}";
+
+        string accessToken = await Authenticator.GetStoredTokenAsync(options.AccessTokenFullPath, TokenType.Access);
+        if (accessToken == null) throw new NullReferenceException(nameof(accessToken));
+        var response = await graphService.UploadLargeFileAsync(accessToken, cloudPath, reader.BaseStream, ConflictBehavior.Rename);
+        
+        reader.Close();
+        //cleanup
+        if (!useExistingFile)
+            temporaryFile.Delete();
+    }
+
+
+    [Fact]
+    public async Task AuthenticationTestReturnsSuccessfulResponse()
+    {
+        await using var provider = new TestServiceProvider().GetTestServiceProvider();
+
+        var options = provider.GetRequiredService<IOptions<ConfigurationOptions>>().Value;
+
+        using var reader = new StreamReader(options.AccessTokenFullPath, Encoding.UTF8);
+        string accessToken = await reader.ReadToEndAsync();
+        reader.Close();
+        
+        var graphService = provider.GetRequiredService<GraphService>();
+
+        var response = await graphService.TestAuthenticationWithBearerTokenAsync(accessToken);
+        
+        Assert.True(response);
     }
 }

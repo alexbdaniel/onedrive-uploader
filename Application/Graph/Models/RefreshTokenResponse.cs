@@ -1,5 +1,4 @@
 using System.Text.Json.Serialization;
-using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace Application.Graph.Models;
 

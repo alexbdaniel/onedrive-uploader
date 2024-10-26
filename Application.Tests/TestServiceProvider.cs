@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+using Application.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -34,6 +35,8 @@ public class TestServiceProvider : IDisposable, IAsyncDisposable
             .AddEnvironmentVariables();
 
         var services = builder.Services;
+
+        services.ConfigureServices(builder);
 
         services.ConfigureTestServices(builder);
 

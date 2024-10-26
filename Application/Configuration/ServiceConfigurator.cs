@@ -13,6 +13,12 @@ public static class ServiceConfigurator
 
         services.ConfigureOptions(builder);
         services.ConfigureGraphHttpClient(builder);
+        
+        services.AddSingleton<GraphService>();
+        services.AddSingleton<UserHandler>();
+        services.AddSingleton<Authenticator>();
+        services.AddSingleton<Authenticator2>();
+        services.AddSingleton<Uploader>();
 
         services.AddMemoryCache();
         
@@ -50,6 +56,7 @@ public static class ServiceConfigurator
             
         });
         
+ 
         
         
         return services;

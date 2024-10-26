@@ -11,9 +11,10 @@ public static class TestServiceConfigurator
     {
         services.ConfigureServices(builder);
 
-        services.AddSingleton<GraphService>();
-        services.AddSingleton<UploadHandler>();
-        services.AddSingleton<Authenticator>();
+        // services.AddSingleton<GraphService>();
+        // services.AddSingleton<UserHandler>();
+        // services.AddSingleton<Authenticator>();
+        // services.AddSingleton<Uploader>();
         
         return services;
     }

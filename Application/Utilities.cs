@@ -1,6 +1,5 @@
+using System.Net;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 
 namespace Application;
 
@@ -23,7 +22,22 @@ public static class Utilities
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
     
+    public static void Clear(this MemoryStream source)
+    {
+        byte[] buffer = source.GetBuffer();
+        Array.Clear(buffer, 0, buffer.Length);
+        source.Position = 0;
+        source.SetLength(0);
+    }
+    
+    public static bool IsSuccessful(this HttpStatusCode statusCode) =>
+        (int)statusCode >= 200 && (int)statusCode <= 299;
 
+    public static bool IsFailure(this HttpStatusCode statusCode) =>
+        statusCode.IsSuccessful() == false;
+
+    public static bool IsUnauthenticatedOrUnauthorized(this HttpStatusCode statusCode) =>
+        statusCode == HttpStatusCode.Unauthorized || statusCode == HttpStatusCode.Forbidden;
 }
 
 public enum TokenType

@@ -9,6 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Azure.Identity" Version="1.13.0" />
         <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.10" />
         <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="8.0.0" />
         <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
@@ -24,7 +25,17 @@
         <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
         <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
         <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="8.0.0" />
+        <PackageReference Include="Microsoft.Graph" Version="5.61.0" />
+        <PackageReference Include="Microsoft.Graph.Communications.Calls" Version="1.2.0.10563" />
+        <PackageReference Include="Microsoft.Graph.Communications.Client" Version="1.2.0.10563" />
+        <PackageReference Include="Microsoft.Graph.Communications.Common" Version="1.2.0.10563" />
+        <PackageReference Include="Microsoft.Graph.Communications.Core" Version="1.2.0.10563" />
+        <PackageReference Include="Microsoft.Graph.Core" Version="3.1.22" />
         <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.1.2" />
+        <PackageReference Include="MimeTypes" Version="2.5.2">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="MiniValidation" Version="0.9.1" />
         <PackageReference Include="Serilog.Enrichers.Environment" Version="3.0.1" />
         <PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0" />
@@ -38,6 +49,11 @@
       <None Update="appsettings.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
+    </ItemGroup>
+    
+    
+    <ItemGroup>
+      <Folder Include="UserInteractions\" />
     </ItemGroup>
 
 </Project>
