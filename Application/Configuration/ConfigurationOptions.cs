@@ -1,10 +1,11 @@
-
+using System.Diagnostics.CodeAnalysis;
 using Env = System.Environment;
 
 
 
 namespace Application.Configuration;
 
+[SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 public class ConfigurationOptions
 {
     public const string Key = "Configuration";

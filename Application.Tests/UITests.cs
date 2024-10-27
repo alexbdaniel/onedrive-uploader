@@ -1,4 +1,3 @@
-using Application;
 using Application.UserInteractions;
 using JetBrains.Annotations;
 using Xunit;

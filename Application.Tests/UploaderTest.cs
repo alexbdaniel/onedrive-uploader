@@ -2,12 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using Application;
-using Application.Graph;
-using Application.Graph.Models;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Graph.Models;
 using Xunit;
 
 namespace Application.Tests;

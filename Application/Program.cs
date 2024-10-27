@@ -1,10 +1,12 @@
 ﻿using System.Reflection;
+using System.Runtime.Versioning;
 using Application.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
 namespace Application;
 
+[SupportedOSPlatform("windows"), SupportedOSPlatform("linux")]
 internal static class Program
 {
     private static async Task Main(string[] args)
@@ -16,16 +18,15 @@ internal static class Program
         builder.Configuration
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", false)
+            .SetEnvironmentNameFromAppSettings(ref builder)
             .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", true)
             .AddUserSecrets(Assembly.GetExecutingAssembly())
             .AddEnvironmentVariables();
-            
+        
         var services = builder.Services;
         
         services.ConfigureServices(builder);
-
-        // var provider = services.BuildServiceProvider();
-
+        
         IHost application = builder.Build();
 
         await application.RunAsync().ConfigureAwait(false);
@@ -43,6 +44,17 @@ internal static class Program
             Console.WriteLine(ex);
         }
     }
-    
-    
+
+
+    private static IConfigurationBuilder SetEnvironmentNameFromAppSettings(this IConfigurationBuilder configurationManager, ref HostApplicationBuilder builder)
+    {
+        
+        string environmentName = builder.Configuration
+            .GetSection("Configuration")
+            .GetValue<string>("Environment") ?? "Production";
+        
+        builder.Environment.EnvironmentName = environmentName;
+        
+        return configurationManager;
+    }
 }

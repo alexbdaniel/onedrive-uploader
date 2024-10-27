@@ -11,4 +11,6 @@ public class UploadOptions
     
     [Required]
     public required string DestinationDirectoryName { get; init; }
+    
+    public bool DeleteAfterUpload { get; init; }
 }

@@ -40,6 +40,10 @@ public static class Utilities
 
     public static bool IsUnauthenticatedOrUnauthorized(this HttpStatusCode statusCode) =>
         statusCode == HttpStatusCode.Unauthorized || statusCode == HttpStatusCode.Forbidden;
+
+    public static bool IsDirectory(this FileInfo file) =>
+         (file.Attributes & FileAttributes.Directory) == FileAttributes.Directory;
+    
 }
 
 public enum TokenType

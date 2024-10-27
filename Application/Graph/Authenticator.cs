@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using System.Net;
 using System.Security.Authentication;
 using System.Text;
@@ -6,7 +5,6 @@ using Application.Configuration;
 using Application.UserInteractions;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using Serilog.Core;
 
 namespace Application.Graph;
 
@@ -92,7 +90,7 @@ public class Authenticator
             TokenType.Access => options.AccessTokenFullPath,
             _ => throw new ArgumentOutOfRangeException(nameof(tokenType), tokenType, null)
         };
-
+        
         try
         {
             var streamOptions = new FileStreamOptions
@@ -102,7 +100,10 @@ public class Authenticator
                 Mode = FileMode.OpenOrCreate,
                 Share = FileShare.Read
             };
-
+            
+            string directoryName = new FileInfo(fullPath).DirectoryName ?? "/";
+            Directory.CreateDirectory(directoryName);
+            
             await using var writer = new StreamWriter(fullPath, Encoding.UTF8, streamOptions);
             await writer.WriteAsync(content);
         }

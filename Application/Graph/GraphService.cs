@@ -9,8 +9,6 @@ using Application.Graph.Models;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.Graph;
-using Microsoft.Graph.Models;
 using UploadSession = Application.Graph.Models.UploadSession;
 
 namespace Application.Graph;
