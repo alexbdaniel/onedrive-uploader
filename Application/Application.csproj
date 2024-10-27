@@ -8,6 +8,11 @@
         <UserSecretsId>41ab79b0-0ef9-4873-9f36-71e2cf7d4a8e</UserSecretsId>
         <AssemblyName>OneDriveUploader</AssemblyName>
     </PropertyGroup>
+    
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=./</PathMap>
+    </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="Azure.Identity" Version="1.13.0" />

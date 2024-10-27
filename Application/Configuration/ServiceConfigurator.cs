@@ -64,7 +64,7 @@ public static class ServiceConfigurator
         if (OperatingSystem.IsLinux())
         {
             configuration
-                .WriteTo.LocalSyslog(AssemblyName.GetAssemblyName(Assembly.GetExecutingAssembly().Location).Name)
+                .WriteTo.LocalSyslog(AssemblyName.GetAssemblyName(AppContext.BaseDirectory).Name)
                 .WriteTo.Console(restrictedToMinimumLevel: defaultLevel);
             return configuration;
         }
