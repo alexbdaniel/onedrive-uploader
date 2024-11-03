@@ -66,7 +66,7 @@ public class WatcherBackgroundService : BackgroundService
         var graphService = scope.ServiceProvider.GetRequiredService<GraphService>();
         
         var authenticator = new Authenticator(graphService, configurationOptions, cache, logger);
-        await authenticator.UpdateRefreshAndAccessTokenAsync();
+        await authenticator.UpdateAccessTokenAsync();
         
         await watcher.HandleInitialFiles();
     }

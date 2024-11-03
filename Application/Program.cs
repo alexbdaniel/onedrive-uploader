@@ -36,12 +36,13 @@ internal static class Program
     {
         try
         {
-            Exception ex = (Exception)e.ExceptionObject;
-            Console.WriteLine($"An unhandled exception occured. {ex}");
+            // Exception ex = (Exception)e.ExceptionObject;
+            Console.WriteLine($"An unhandled exception occured.");
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex);
+            Console.WriteLine($"An unhandled exception occured.");
+            // Console.WriteLine(ex);
         }
     }
 

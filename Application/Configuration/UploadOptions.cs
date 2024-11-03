@@ -6,7 +6,7 @@ public class UploadOptions
 {
     public const string Key = "Upload";
     
-    [Required]
+    [Required] [DirectoryExists]
     public required string SourceDirectoryName { get; init; }
     
     [Required]

@@ -49,6 +49,8 @@ public static class ServiceConfigurator
             .Enrich.WithMachineName()
             .Enrich.WithThreadId()
             .Enrich.WithEnvironmentUserName()
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+            .MinimumLevel.Override("System", LogEventLevel.Warning)
             .CreateLogger();
         
         services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(logger));
@@ -84,14 +86,17 @@ public static class ServiceConfigurator
     {
         services.AddOptions<ConfigurationOptions>().Bind(builder.Configuration.GetSection(ConfigurationOptions.Key))
             .ValidateDataAnnotations()
+            .Validate(OptionsValidator.Validate)
             .ValidateOnStart();
         
         services.AddOptions<UploadOptions>().Bind(builder.Configuration.GetSection(UploadOptions.Key))
             .ValidateDataAnnotations()
+            .Validate(OptionsValidator.Validate)
             .ValidateOnStart();
         
         services.AddOptions<GraphOptions>().Bind(builder.Configuration.GetSection(GraphOptions.Key))
             .ValidateDataAnnotations()
+            .Validate(OptionsValidator.Validate)
             .ValidateOnStart();
         
         return services;

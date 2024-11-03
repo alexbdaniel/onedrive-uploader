@@ -35,12 +35,12 @@ public class Authenticator
     {
         string code = UserHandler.GetAuthorizationCodeFromUser(graphService.GetAuthenticationCodeUri());
         
-        var (statusCode, response) = await graphService.GetRefreshTokenAsync(code);
-        if (statusCode != HttpStatusCode.OK || response == null)
+        var result = await graphService.GetRefreshTokenAsync(code);
+        if (result.StatusCode != HttpStatusCode.OK || result.Response == null)
             throw new AuthenticationException("Could not get refresh token from code");
 
-        await SaveTokenAsync(TokenType.Refresh, response.RefreshToken);
-        await SaveTokenAsync(TokenType.Access, response.AccessToken);
+        await SaveTokenAsync(TokenType.Refresh, result.Response.RefreshToken);
+        await SaveTokenAsync(TokenType.Access, result.Response.AccessToken);
         
         AccessTokenValid = true;
         RefreshTokenValid = true;
@@ -59,15 +59,15 @@ public class Authenticator
             return GetRequiredStoredToken(TokenType.Access, cache);
         }
 
-        var (statusCode, response) = await graphService.GetAccessTokenAsync(refreshToken);
+        var result = await graphService.GetAccessTokenAsync(refreshToken);
         //could be that the refresh token expired
-        if (statusCode.IsSuccessful() == false || response?.AccessToken == null)
+        if (result.StatusCode.IsSuccessful() == false || result.Response?.AccessToken == null)
         {
             await UpdateRefreshAndAccessTokenAsync();
             return GetRequiredStoredToken(TokenType.Access, cache);
         }
 
-        await SaveTokenAsync(TokenType.Access, response!.AccessToken);
+        await SaveTokenAsync(TokenType.Access, result.Response!.AccessToken);
         
         AccessTokenValid = true;
         RefreshTokenValid = true;

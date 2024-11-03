@@ -51,12 +51,12 @@ public class GraphService
     /// </summary>
     /// <param name="code">The authentication code from the redirected uri.</param>
     /// <returns>Refresh token returned if status is successful.</returns>
-    public async Task<(HttpStatusCode, RefreshTokenResponse?)> GetRefreshTokenAsync(string code)
+    public async Task<GraphServiceResult<RefreshTokenResponse>> GetRefreshTokenAsync(string code)
     {
         var formContent = new FormUrlEncodedContent(new[]
         {
             new KeyValuePair<string, string>("client_id", options.ClientId),
-            new KeyValuePair<string, string>("client_secret", options.ClientSecret),
+            // new KeyValuePair<string, string>("client_secret", options.ClientSecret),
             new KeyValuePair<string, string>("code", code),
             new KeyValuePair<string, string>("redirect_uri", options.RedirectUri),
             new KeyValuePair<string, string>("grant_type", "authorization_code"),
@@ -68,20 +68,28 @@ public class GraphService
         
         var response = await client.SendAsync(message);
         
-        RefreshTokenResponse? content = null;
         if (response.StatusCode == HttpStatusCode.OK)
-            content = await response.Content.ReadFromJsonAsync<RefreshTokenResponse>(Utilities.GraphSerializerOptions);
+        { 
+            var content = await response.Content.ReadFromJsonAsync<RefreshTokenResponse>(Utilities.GraphSerializerOptions);
+            if (content == null)
+                throw new NullReferenceException($"{nameof(RefreshTokenResponse)} is null despite OK status code.");
+            
+            return new GraphServiceResult<RefreshTokenResponse>(response.StatusCode, content);
+        }
         
-        return (response.StatusCode, content);
+        string rawContent = await response.Content.ReadAsStringAsync();
+        
+        logger.LogWarning("Get refresh token failed. {statusCode}, {rawContent}", response.StatusCode, rawContent);
+        return new GraphServiceResult<RefreshTokenResponse>(response.StatusCode, rawContent);
     }
     
     
-    public async Task<(HttpStatusCode, AccessTokenResponse?)> GetAccessTokenAsync(string refreshToken)
+    public async Task<GraphServiceResult<AccessTokenResponse>> GetAccessTokenAsync(string refreshToken)
     {
         var formContent = new FormUrlEncodedContent(new[]
         {
             new KeyValuePair<string, string>("client_id", options.ClientId),
-            new KeyValuePair<string, string>("client_secret", options.ClientSecret),
+            // new KeyValuePair<string, string>("client_secret", options.ClientSecret),
             new KeyValuePair<string, string>("refresh_token", refreshToken),
             new KeyValuePair<string, string>("redirect_uri", options.RedirectUri),
             new KeyValuePair<string, string>("grant_type", "refresh_token"),
@@ -93,11 +101,19 @@ public class GraphService
         
         var response = await client.SendAsync(message);
         
-        AccessTokenResponse? content = null;
         if (response.StatusCode == HttpStatusCode.OK)
-            content = await response.Content.ReadFromJsonAsync<AccessTokenResponse>(Utilities.GraphSerializerOptions);
+        { 
+            var content = await response.Content.ReadFromJsonAsync<AccessTokenResponse>(Utilities.GraphSerializerOptions);
+            if (content == null)
+                throw new NullReferenceException($"{nameof(AccessTokenResponse)} is null despite OK status code.");
+            
+            return new GraphServiceResult<AccessTokenResponse>(response.StatusCode, content);
+        }
         
-        return (response.StatusCode, content);
+        string rawContent = await response.Content.ReadAsStringAsync();
+        
+        logger.LogWarning("Get access token failed. {statusCode}, {rawContent}", response.StatusCode, rawContent);
+        return new GraphServiceResult<AccessTokenResponse>(response.StatusCode, rawContent);
     }
 
 

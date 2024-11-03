@@ -47,9 +47,9 @@ public class GraphServiceTest
         
         var graphService = provider.GetRequiredService<GraphService>();
         
-        var response = await graphService.GetAccessTokenAsync(refreshToken);
+        var result = await graphService.GetAccessTokenAsync(refreshToken);
 
-        string accessToken = response.Item2.AccessToken;
+        string accessToken = result.Response.AccessToken;
         
     }
 
@@ -144,9 +144,9 @@ public class GraphServiceTest
         await using var provider = new TestServiceProvider().GetTestServiceProvider();
         var graphService = provider.GetRequiredService<GraphService>();
 
-        var response = await graphService.GetRefreshTokenAsync(authenticationCode);
+        var result = await graphService.GetRefreshTokenAsync(authenticationCode);
 
-        string txt = JsonSerializer.Serialize(response.Item2);
+        string txt = JsonSerializer.Serialize(result.Response);
         testConsole.WriteLine(txt);
         
         Assert.True(true, txt);

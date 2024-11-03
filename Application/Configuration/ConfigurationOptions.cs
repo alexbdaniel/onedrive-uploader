@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using Env = System.Environment;
 
@@ -12,12 +13,14 @@ public class ConfigurationOptions
 
     private const string ApplicationFileSystemName = "onedrive-uploader";
     
+    [Required] [DirectoryExists]
     public string ApplicationDirectoryName { get; init; } =
         Path.Combine(Env.GetFolderPath(Env.SpecialFolder.LocalApplicationData), ApplicationFileSystemName);
     
     public string ConfigurationDirectoryName { get; init; } =
         Path.Combine(Env.GetFolderPath(Env.SpecialFolder.ApplicationData), ApplicationFileSystemName);
-
+    
+    [DirectoryExists(Create = true)]
     public string SecretsDirectoryName =>
         Path.Combine(ApplicationDirectoryName, "secrets");
     
