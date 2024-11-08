@@ -67,8 +67,14 @@ public static class ServiceConfigurator
         
         if (OperatingSystem.IsLinux())
         {
+            string logDirectoryName = Path.Combine(Directory.GetCurrentDirectory(), "log");
+            Directory.CreateDirectory(logDirectoryName);
+            
+            string logFullPath = Path.Combine(logDirectoryName, $"{applicationName}.log");
+            
             configuration
                 .WriteTo.LocalSyslog(appName: applicationName)
+                .WriteTo.File(path: logFullPath, retainedFileCountLimit: 2)
                 .WriteTo.Console(restrictedToMinimumLevel: defaultLevel);
             return configuration;
         }
