@@ -39,7 +39,7 @@ internal static class Program
             // Exception ex = (Exception)e.ExceptionObject;
             Console.WriteLine($"An unhandled exception occured.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             Console.WriteLine($"An unhandled exception occured.");
             // Console.WriteLine(ex);
