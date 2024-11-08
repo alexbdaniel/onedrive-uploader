@@ -89,7 +89,6 @@ public class GraphService
         var formContent = new FormUrlEncodedContent(new[]
         {
             new KeyValuePair<string, string>("client_id", options.ClientId),
-            // new KeyValuePair<string, string>("client_secret", options.ClientSecret),
             new KeyValuePair<string, string>("refresh_token", refreshToken),
             new KeyValuePair<string, string>("redirect_uri", options.RedirectUri),
             new KeyValuePair<string, string>("grant_type", "refresh_token"),
