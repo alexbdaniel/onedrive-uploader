@@ -63,10 +63,12 @@ public static class ServiceConfigurator
     [SuppressMessage("ReSharper", "InvertIf")]
     private static LoggerConfiguration ConfigureSinks(this LoggerConfiguration configuration, LogEventLevel defaultLevel = LogEventLevel.Information)
     {
+        const string applicationName = "onedrive-uploader"; //AssemblyName.GetAssemblyName(AppContext.BaseDirectory).Name
+        
         if (OperatingSystem.IsLinux())
         {
             configuration
-                .WriteTo.LocalSyslog(AssemblyName.GetAssemblyName(AppContext.BaseDirectory).Name)
+                .WriteTo.LocalSyslog(appName: applicationName)
                 .WriteTo.Console(restrictedToMinimumLevel: defaultLevel);
             return configuration;
         }
