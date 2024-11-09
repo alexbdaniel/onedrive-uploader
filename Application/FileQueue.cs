@@ -1,9 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using System.Threading.Channels;
 using Application.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.Graph.Models;
 
 namespace Application;
 
@@ -40,19 +40,24 @@ public class FileQueue
         {
             while (reader.TryRead(out string? fullPath))
             {
+                logger.LogInformation("Handling file \"{fileToUploadPath}\"", fullPath);
+                
                 if (fullPath == null) 
                     continue;
             
                 FileInfo file = new FileInfo(fullPath);
-                if (!file.Exists)
+                if (!file.Exists || file.IsDirectory())
                     continue;
-            
+                
+                
                 await using Stream? stream = await GetStreamAsync(file);
                 if (stream == null)
                     continue;
             
                 var (destinationDirectoryName, fileName) = GetDestinationPaths(file);
-            
+                if (destinationDirectoryName == null || fileName == null)
+                    continue;
+                
                 bool result = await uploader.UploadAsync(destinationDirectoryName, fileName, stream);
                 await HandleResultAsync(result, stream, file);
             
@@ -61,17 +66,45 @@ public class FileQueue
         }
     }
     
-    private (string, string) GetDestinationPaths(FileInfo file)
-    { 
-        string sourceRootDirectoryName = new Uri(options.SourceDirectoryName).LocalPath;
+    private (string?, string?) GetDestinationPaths(FileInfo file)
+    {
+        var sourceDirectory = new DirectoryInfo(options.SourceDirectoryName);
+        
+        logger.LogInformation("Getting destination paths:\n" +
+                              "sourceRootDirectoryName == \"{sourceDirectoryName}\"", sourceDirectory.FullName);
+
+        string sourceRootDirectoryName;
+        try
+        {
+            sourceRootDirectoryName = new Uri(sourceDirectory.FullName).LocalPath;
+        }
+        catch (UriFormatException)
+        {
+            logger.LogError("sourceRootDirectoryName cannot be convereted to URI. Check options SourceDirectoryName is valid." +
+                            "Supplied = \"{SourceDirectoryName}\"", sourceDirectory.FullName);
+            return (null, null);
+        }
         string sourceRelativePath = file.FullName.Replace(sourceRootDirectoryName, ""); //includes fileName
 
         int namePosition = sourceRelativePath.LastIndexOf(file.Name, StringComparison.Ordinal);
 
-        string sourceRelativeDirectoryName = sourceRelativePath[..namePosition];
-        string destinationDirectoryName = Path.Combine(options.DestinationDirectoryName, sourceRelativeDirectoryName);
+        string sourceRelativeDirectoryName = sourceRelativePath[..namePosition]; //removes file name
+
+        string cloudRootFolderPath = options.DestinationDirectoryName;
         
-        return (destinationDirectoryName, file.Name);
+        var builder = new StringBuilder(cloudRootFolderPath);
+        builder.AppendJoin('/', sourceRelativeDirectoryName);
+        builder.Replace('\\', '/');
+        builder.Replace("//", "/");
+        builder.Replace("//", "/");
+        builder.Replace("//", "/");
+
+        string cloudDirectoryName = builder.ToString();
+
+        logger.LogInformation("Cloud root folder = \"{cloudRootFolder}\"", cloudRootFolderPath);
+        logger.LogInformation("Cloud folder path = \"{cloudDirectoryName}\"", cloudDirectoryName);
+        
+        return (cloudDirectoryName, file.Name);
     }
 
 

@@ -32,8 +32,7 @@ public class QueueBackgroundService : BackgroundService
             catch (OperationCanceledException) {}
             catch (Exception ex)
             {
-                logger.LogError(ex, "Unhandled exception.");
-                logger.LogError("Waiting 15 seconds...");
+                logger.LogError(ex, "Unhandled exception. Waiting 15 seconds before trying again...");
                 await Task.Delay(TimeSpan.FromSeconds(15), cancellationToken);
             }
 

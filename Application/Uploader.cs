@@ -34,7 +34,7 @@ public class Uploader
     /// <returns>Success of upload</returns>
     public async Task<bool> UploadAsync(string folderPath, string fileName, Stream stream)
     {
-        logger.LogInformation("Uploading \"{uploadingFileName}\"", fileName);
+        logger.LogInformation("Uploading \"{uploadingFileName}\" to folder \"{cloudFolderPath}\"", fileName, folderPath);
         
         var authenticator = new Authenticator(graphService, options, cache, logger);
 

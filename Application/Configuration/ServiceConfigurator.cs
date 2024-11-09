@@ -1,10 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
-using System.Reflection;
-using System.Runtime.InteropServices;
 using Application.Graph;
 using Application.UserInteractions;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
@@ -41,15 +38,14 @@ public static class ServiceConfigurator
     private static IServiceCollection ConfigureLogging(this IServiceCollection services, HostApplicationBuilder builder)
     {
         using var provider = services.BuildServiceProvider();
-        LogEventLevel defaultLevel = builder.Configuration.GetSection("Logging:LogLevel").GetValue("Default", LogEventLevel.Information);
         
         var logger = new LoggerConfiguration()
-            .ConfigureSinks(defaultLevel)
+            .ConfigureSinks()
             .Enrich.WithEnvironmentName()
             .Enrich.WithMachineName()
             .Enrich.WithThreadId()
             .Enrich.WithEnvironmentUserName()
-            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
             .MinimumLevel.Override("System", LogEventLevel.Warning)
             .CreateLogger();
         
@@ -75,7 +71,7 @@ public static class ServiceConfigurator
             configuration
                 .WriteTo.LocalSyslog(appName: applicationName)
                 .WriteTo.File(path: logFullPath, retainedFileCountLimit: 2)
-                .WriteTo.Console(restrictedToMinimumLevel: defaultLevel);
+                .WriteTo.Console();
             return configuration;
         }
 
